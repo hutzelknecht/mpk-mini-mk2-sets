@@ -1,7 +1,14 @@
 # AKAI MPK Mini Mk II — Trip Hop Instrument
 
 A real-time software instrument for the AKAI MPK Mini Mk II.  
-Pads play synthesised trip hop drums. Keys play a lofi marimba/vibraphone synth in the style of Massive Attack's *Teardrop*. Knobs shape the synth sound; drums are unaffected except by master volume.
+On startup you're prompted to pick a **song**, each with its own pad drum kit and keys synth voice:
+
+| Song | Pads | Keys |
+|------|------|------|
+| Teardrop — Massive Attack | trip hop drum kit | lofi marimba/vibraphone synth |
+| Via con me — Paolo Conte | brushed/latin lounge percussion (soft kick, brush snare, ride, castanets, claves, conga, maracas) | musette accordion synth |
+
+Press Enter at the prompt to load the first song. Knobs shape the synth sound (with song-specific starting values); drums are unaffected except by master volume.
 
 ## Requirements
 
@@ -22,16 +29,18 @@ python trip_hop.py
 
 ## Pads (notes 36–51, any channel)
 
-| Pad | Note | Sound          |
-|-----|------|----------------|
-| 1   | 36   | Kick           |
-| 2   | 37   | Snare          |
-| 3   | 38   | Hi-hat closed  |
-| 4   | 39   | Hi-hat open    |
-| 5   | 40   | Tambourine     |
-| 6   | 41   | Rimshot        |
-| 7   | 42   | Ghost snare    |
-| 8   | 43   | Shaker         |
+Sound assignment depends on the song picked at startup:
+
+| Pad | Note | Teardrop        | Via con me       |
+|-----|------|-----------------|------------------|
+| 1   | 36   | Kick            | Soft kick        |
+| 2   | 37   | Snare           | Brush snare      |
+| 3   | 38   | Hi-hat closed   | Hat tick         |
+| 4   | 39   | Hi-hat open     | Ride             |
+| 5   | 40   | Tambourine      | Castanets        |
+| 6   | 41   | Rimshot         | Claves           |
+| 7   | 42   | Ghost snare     | Conga            |
+| 8   | 43   | Shaker          | Maracas          |
 
 Bank B (notes 44–51) repeats the same pattern. Only master volume (K1) affects drums.
 
@@ -39,7 +48,10 @@ Bank B (notes 44–51) repeats the same pattern. Only master volume (K1) affects
 
 ## Keys (any channel, notes outside 36–51)
 
-Lofi marimba/vibraphone hybrid. Timbre: sine fundamental + upper harmonics + sub-octave, shaped by a fast 6 ms attack and exponential decay. Each voice runs through a per-voice warm LP filter, optional bit crush, and a subtle stereo spread before entering the global synth chain.
+Both songs use the same voice architecture — sine fundamental + upper harmonics, shaped by a fast 6 ms attack and exponential decay, run through a per-voice warm LP filter, optional bit crush, and a subtle stereo spread before entering the global synth chain — but with different harmonic content and default knob values:
+
+- **Teardrop**: lofi marimba/vibraphone hybrid, with a sub-octave partial for a plucked, struck character.
+- **Via con me**: musette accordion voice — whole-harmonic reed stack, longer sustain, and a stronger detune for the classic double-reed "wet" warble.
 
 The hardware arpeggiator works cleanly — each step replaces the previous voice with a short 15 ms fade, avoiding clicks and voice accumulation.
 

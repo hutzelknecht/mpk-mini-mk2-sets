@@ -2,7 +2,9 @@
 
 ## Context
 
-The existing `trip_hop.py` is a real-time synthesizer with a marimba/vibraphone synth and 8 drum sounds already tuned for Massive Attack's "Teardrop" (trip-hop style). It has no looping capability — everything is live-only. This plan adds a **4-layer MIDI looper** controlled entirely from the MPK Mini's Bank B pads, enabling a full Teardrop performance without touching the computer.
+The existing engine (`src/engine.py`, run via the `trip_hop.py` entry point) is a real-time synthesizer with a marimba/vibraphone synth and 8 drum sounds already tuned for Massive Attack's "Teardrop" (trip-hop style; see `src/songs/teardrop.py`). It has no looping capability — everything is live-only. This plan adds a **4-layer MIDI looper** controlled entirely from the MPK Mini's Bank B pads, enabling a full Teardrop performance without touching the computer.
+
+Since this plan was written, the project was split into `src/engine.py` (shared audio/MIDI engine — everything below), `src/utils.py` (shared DSP helpers: `SR`, `_st`, `_t`, `_e`), and `src/songs/*.py` (per-song drum kit + synth voice, e.g. `_kick`/`_snare`/`_shaker`/etc. now live in `src/songs/teardrop.py`, not in the engine). All line references below have been updated to point at `src/engine.py`; the looper itself is engine-level (song-agnostic transport/recording machinery), so it belongs in `src/engine.py` alongside `process_midi_message()`, `_midi_loop()`, and `main()`.
 
 ---
 
@@ -110,10 +112,12 @@ EMPTY ---(tap pad)--→ COUNTING (waits for next bar boundary)
 
 ## Implementation
 
-### Step 1 — Imports and constants (after line 27)
+All steps below are in `src/engine.py` unless noted otherwise.
+
+### Step 1 — Imports and constants (after the import block, line 28)
 Add `import time` to existing imports.
 
-After the `S = {...}` block (~line 46), add:
+After the `S = {...}` block (~line 45), add:
 ```python
 _BPM           = 93
 _BEAT_DUR      = 60.0 / _BPM       # 0.64516…s
@@ -127,8 +131,8 @@ _LOOPER_PADS   = 4                # pads 44-47 → layers 0-3
 _METRO_PAD     = 51               # pad B8 → toggle metronome
 ```
 
-### Step 2 — New classes after `_shaker()` (~line 311, before `_DFNS`)
-Insert `LayerState` (Enum), `LoopEvent` (dataclass), `MidiLayer`, and `MidiLooper` classes.
+### Step 2 — New classes before the "Drum sample cache" section (~line 248, before `_DFNS`)
+Insert `LayerState` (Enum), `LoopEvent` (dataclass), `MidiLayer`, and `MidiLooper` classes. (Drum synthesis functions like `_kick`/`_shaker` no longer live in this file — they're per-song in `src/songs/*.py` — so the anchor is the drum-cache section instead.)
 
 **Key MidiLooper methods:**
 - `on_pad_press(layer_idx, now)` — EMPTY→COUNTING, PLAYING↔OVERDUBBING
@@ -162,6 +166,7 @@ for ev in layer.events:
 ```
 
 ### Step 3 — Metronome click synthesis (after new classes)
+Add `_st` to the `src.utils` import (`from .utils import SR, _st`) — `_st` isn't currently imported into `engine.py` since it's only used by the per-song drum functions in `src/songs/`.
 ```python
 def _make_click_buf(freq, amp):
     t   = np.arange(int(SR * 0.015)) / SR   # 15ms
@@ -189,14 +194,14 @@ def process_midi_message(msg_type, note, velocity):
                 _notes_off.append(note)
 ```
 
-### Step 5 — Modify `_rebuild_dmap()` (line 317)
+### Step 5 — Modify `_rebuild_dmap()` (line 254)
 Remove the Bank B line so notes 44–51 become looper controls:
 ```python
 # Remove this line:
 _DMAP[note + 8] = i   # Bank B
 ```
 
-### Step 6 — Rewrite `_midi_loop()` (line 413)
+### Step 6 — Rewrite `_midi_loop()` (line 350)
 Route Bank B pads (notes 44–51) to looper; route all musical events through `process_midi_message()` + `_looper.on_midi_event()`. Capture timestamp with `time.perf_counter()` immediately on each message.
 
 Key routing:
@@ -213,7 +218,7 @@ else:
     _looper.on_midi_event(...)
 ```
 
-### Step 7 — Modify `main()` (line 438)
+### Step 7 — Modify `main()` (line 393)
 Initialize click buffers and looper before starting MIDI thread, add startup UI text:
 ```python
 global _CLICK_BUF, _ACCENT_BUF, _looper
@@ -243,10 +248,10 @@ t.start()
 
 ## Files to Modify
 
-- **`/home/micha/dev/midi/trip_hop.py`** — all changes here, ~280 new lines, ~30 modified lines
+- **`/home/micha/dev/midi/src/engine.py`** — all changes here, ~280 new lines, ~30 modified lines
 - **`/home/micha/dev/midi/PLAN_LOOPER.md`** — this file
 
-No new Python files needed. `requirements.txt` unchanged (all libraries already present).
+No new Python files needed. `requirements.txt` unchanged (all libraries already present). `trip_hop.py` (the entry point) and `src/songs/*.py` (per-song instrument sets) are untouched.
 
 ---
 
