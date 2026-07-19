@@ -2,7 +2,7 @@
 
 ## Context
 
-The existing engine (`src/engine.py`, run via the `trip_hop.py` entry point) is a real-time synthesizer with a marimba/vibraphone synth and 8 drum sounds already tuned for Massive Attack's "Teardrop" (trip-hop style; see `src/songs/teardrop.py`). It has no looping capability — everything is live-only. This plan adds a **4-layer MIDI looper** controlled entirely from the MPK Mini's Bank B pads, enabling a full Teardrop performance without touching the computer.
+The existing engine (`src/engine.py`, run via the `run.py` entry point) is a real-time synthesizer with a marimba/vibraphone synth and 8 drum sounds already tuned for Massive Attack's "Teardrop" (trip-hop style; see `src/songs/teardrop.py`). It has no looping capability — everything is live-only. This plan adds a **4-layer MIDI looper** controlled entirely from the MPK Mini's Bank B pads, enabling a full Teardrop performance without touching the computer.
 
 Since this plan was written, the project was split into `src/engine.py` (shared audio/MIDI engine — everything below), `src/utils.py` (shared DSP helpers: `SR`, `_st`, `_t`, `_e`), and `src/songs/*.py` (per-song drum kit + synth voice, e.g. `_kick`/`_snare`/`_shaker`/etc. now live in `src/songs/teardrop.py`, not in the engine). All line references below have been updated to point at `src/engine.py`; the looper itself is engine-level (song-agnostic transport/recording machinery), so it belongs in `src/engine.py` alongside `process_midi_message()`, `_midi_loop()`, and `main()`.
 
@@ -49,7 +49,7 @@ K1=vol, K2=LP cutoff, K3=Q, K4=reverb, K5=release, K6=detune, K7=drive, K8=bit-c
 ## UX Flow (Teardrop performance)
 
 ```
-1. Run:  python trip_hop.py
+1. Run:  python run.py
          → metronome click starts at 93 BPM immediately
          → terminal shows: Bar1[●···]  L1:[ ]  L2:[ ]  L3:[ ]  L4:[ ]
 
@@ -251,13 +251,13 @@ t.start()
 - **`/home/micha/dev/midi/src/engine.py`** — all changes here, ~280 new lines, ~30 modified lines
 - **`/home/micha/dev/midi/PLAN_LOOPER.md`** — this file
 
-No new Python files needed. `requirements.txt` unchanged (all libraries already present). `trip_hop.py` (the entry point) and `src/songs/*.py` (per-song instrument sets) are untouched.
+No new Python files needed. `requirements.txt` unchanged (all libraries already present). `run.py` (the entry point) and `src/songs/*.py` (per-song instrument sets) are untouched.
 
 ---
 
 ## Verification
 
-1. **Start**: `cd /home/micha/dev/midi && source .venv/bin/activate && python trip_hop.py`
+1. **Start**: `cd /home/micha/dev/midi && source .venv/bin/activate && python run.py`
    - Hear metronome click at 93 BPM immediately
    - Terminal shows `Bar1[●···]  L1:[ ]  L2:[ ]  L3:[ ]  L4:[ ]`
 

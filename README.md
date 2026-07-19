@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 ```bash
 source .venv/bin/activate
-python trip_hop.py
+python run.py
 ```
 
 ---
